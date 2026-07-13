@@ -1,12 +1,12 @@
-import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsObject, IsOptional, IsNumber, IsString } from 'class-validator';
 
 export class CreateDepartmentDto {
-  @IsString()
-  name: string;
+  @IsObject()
+  name: Record<string, string>;
 
-  @IsString()
+  @IsObject()
   @IsOptional()
-  description?: string;
+  description?: Record<string, string>;
 
   @IsNumber()
   @IsOptional()

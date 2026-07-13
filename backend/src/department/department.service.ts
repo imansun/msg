@@ -40,14 +40,14 @@ export class DepartmentService {
   async findAll() {
     return this.deptRepo.find({
       relations: { children: true, members: true },
-      order: { level: 'ASC', name: 'ASC' },
+      order: { level: 'ASC', id: 'ASC' },
     });
   }
 
   async findTree() {
     const all = await this.deptRepo.find({
       relations: { members: true },
-      order: { name: 'ASC' },
+      order: { id: 'ASC' },
     });
     return this.buildTree(all, null);
   }
@@ -107,7 +107,8 @@ export class DepartmentService {
       user.departments.push(dept);
       await this.userRepo.save(user);
     }
-    return { message: `کاربر ${user.username} به ${dept.name} منتسب شد` };
+    const deptName = dept.name?.fa || dept.name?.en || JSON.stringify(dept.name);
+    return { message: `کاربر ${user.username} به ${deptName} منتسب شد` };
   }
 
   async removeUser(deptId: number, userId: number) {

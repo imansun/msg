@@ -11,16 +11,18 @@ import {
 } from 'typeorm';
 import { User } from '../auth/user.entity';
 
+export type LocaleDict = Record<string, string>;
+
 @Entity()
 export class Department {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  name: string;
+  @Column('jsonb')
+  name: LocaleDict;
 
-  @Column({ nullable: true })
-  description: string;
+  @Column('jsonb', { nullable: true })
+  description: LocaleDict | null;
 
   @Column({ default: 0 })
   level: number;

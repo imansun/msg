@@ -6,7 +6,7 @@ export const baseNavigationObj: Record<string, NavigationTree> = {
     type: "item",
     path: "/admin",
     title: "مدیریت",
-    transKey: "nav.admin",
+    transKey: "nav.admin.admin",
     icon: "dashboards",
   },
   chat: {

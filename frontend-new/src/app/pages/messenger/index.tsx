@@ -62,9 +62,12 @@ import { Page } from "@/components/shared/Page";
 import { Button, Avatar, Badge } from "@/components/ui";
 import { Collapse } from "@/components/ui";
 import { FilePond } from "@/components/shared/form/Filepond";
+import { LanguageSelector } from "@/components/template/LanguageSelector";
 import { useAuthContext } from "@/app/contexts/auth/context";
+import { useLocaleContext } from "@/app/contexts/locale/context";
 import { useLocalStorage } from "@/hooks";
 import { randomId } from "@/utils/randomId";
+import { getLocalizedField } from "@/utils";
 
 const API = "http://localhost:3000";
 
@@ -152,7 +155,7 @@ interface UserItem {
 
 interface Dept {
   id: number;
-  name: string;
+  name: Record<string, string>;
   parentId: number | null;
   level: number;
   children?: Dept[];
@@ -186,10 +189,12 @@ function DeptTreeNode({
   toggleOpen: (id: number) => void;
   myDeptIds: number[];
 }) {
+  const { locale } = useLocaleContext();
   const open = openState[dept.id] ?? false;
   const hasChildren = dept.children && dept.children.length > 0;
   const hasOpenTab = tabs.some((t) => t.type === "dept" && t.targetId === dept.id);
-  const DeptIcon = getDeptIcon(dept.name);
+  const deptDisplayName = getLocalizedField(dept.name, locale);
+  const DeptIcon = getDeptIcon(dept.name.fa || dept.name.en || deptDisplayName);
 
   return (
     <div>
@@ -222,7 +227,7 @@ function DeptTreeNode({
           ) : (
             <DeptIcon className={clsx("size-4 shrink-0", hasOpenTab ? "text-primary" : "text-gray-400 dark:text-dark-400")} />
           )}
-          <span className="truncate">{dept.name}</span>
+          <span className="truncate">{deptDisplayName}</span>
           {myDeptIds.includes(dept.id) && (
             <Badge isGlow color="primary" className="mr-auto shrink-0 px-1.5 py-0.5 text-[8px] leading-none">
               عضو
@@ -252,6 +257,7 @@ function DeptTreeNode({
 }
 export default function Messenger() {
   const { user, logout } = useAuthContext();
+  const { locale } = useLocaleContext();
   const [tabs, setTabs] = useState<ChatTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>("");
   const [onlineUsers, setOnlineUsers] = useState<number[]>([]);
@@ -445,8 +451,9 @@ export default function Messenger() {
       <div className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-gray-200 dark:border-dark-500">
         {/* Sidebar */}
         <div className="flex w-64 flex-col border-s-0 border-gray-200 bg-gray-50/50 dark:border-dark-500 dark:bg-dark-700/30">
-          <div className="border-b border-gray-200 p-3 dark:border-dark-500">
+          <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-dark-500">
             <p className="text-xs font-bold text-gray-400">گفتگوها</p>
+            <LanguageSelector />
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             <button
@@ -799,9 +806,9 @@ export default function Messenger() {
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-4">
                 <div className="flex items-center gap-3">
-                  {membersDept && (() => { const Icon = getDeptIcon(membersDept.name); return <Icon className="size-6 text-primary" />; })()}
+                  {membersDept && (() => { const Icon = getDeptIcon(membersDept.name.fa || membersDept.name.en || getLocalizedField(membersDept.name, locale)); return <Icon className="size-6 text-primary" />; })()}
                   <div>
-                    <h3 className="font-bold text-gray-800 dark:text-dark-50">{membersDept?.name}</h3>
+                    <h3 className="font-bold text-gray-800 dark:text-dark-50">{getLocalizedField(membersDept?.name, locale)}</h3>
                     <p className="text-[10px] text-gray-400">اعضای دپارتمان</p>
                   </div>
                 </div>

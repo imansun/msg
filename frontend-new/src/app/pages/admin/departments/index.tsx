@@ -9,24 +9,30 @@ import {
   UserPlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useLocaleContext } from "@/app/contexts/locale/context";
+import { getLocalizedField } from "@/utils";
+import { locales } from "@/i18n/langs";
 
 interface Department {
   id: number;
-  name: string;
-  description: string;
+  name: Record<string, string>;
+  description: Record<string, string>;
   level: number;
   parentId: number | null;
   children: Department[];
   members: { id: number; username: string; isAdmin: boolean }[];
 }
 
+const langEntries = Object.entries(locales).map(([code, { label }]) => ({ code, label }));
+
 export default function AdminDepartments() {
+  const { locale } = useLocaleContext();
   const [tree, setTree] = useState<Department[]>([]);
   const [flat, setFlat] = useState<Department[]>([]);
   const [allUsers, setAllUsers] = useState<{ id: number; username: string; isApproved: boolean }[]>([]);
   const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
+  const [newName, setNewName] = useState<Record<string, string>>({ fa: "", en: "", ar: "", es: "", "zh-cn": "" });
+  const [newDesc, setNewDesc] = useState<Record<string, string>>({ fa: "", en: "", ar: "", es: "", "zh-cn": "" });
   const [parentId, setParentId] = useState<number | null>(null);
   const [assignTarget, setAssignTarget] = useState<number | null>(null);
 
@@ -44,10 +50,18 @@ export default function AdminDepartments() {
   useEffect(() => { fetchData(); }, []);
 
   const addDept = async () => {
-    if (!newName.trim()) return;
-    await axios.post("/departments", { name: newName, description: newDesc, parentId });
+    const nameObj: Record<string, string> = {};
+    const descObj: Record<string, string> = {};
+    for (const { code } of langEntries) {
+      if (newName[code]?.trim()) nameObj[code] = newName[code].trim();
+      if (newDesc[code]?.trim()) descObj[code] = newDesc[code].trim();
+    }
+    if (!nameObj.fa && !nameObj.en) { toast.error("حداقل یک نام وارد کنید"); return; }
+    await axios.post("/departments", { name: nameObj, description: descObj, parentId });
     toast.success("دپارتمان ساخته شد");
-    setNewName(""); setNewDesc(""); setParentId(null); setShowAdd(false);
+    setNewName({ fa: "", en: "", ar: "", es: "", "zh-cn": "" });
+    setNewDesc({ fa: "", en: "", ar: "", es: "", "zh-cn": "" });
+    setParentId(null); setShowAdd(false);
     fetchData();
   };
 
@@ -77,7 +91,7 @@ export default function AdminDepartments() {
         <div className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3 dark:border-dark-500 dark:bg-dark-700/30">
           <span className="font-medium text-gray-800 dark:text-dark-100">
             {depth > 0 && <span className="ml-1 text-gray-400">└─</span>}
-            {node.name}
+            {getLocalizedField(node.name, locale)}
           </span>
           {node.members?.length > 0 && (
             <span className="rounded-full bg-success/10 px-2 py-0.5 text-xs text-success">
@@ -125,9 +139,15 @@ export default function AdminDepartments() {
 
         {showAdd && (
           <Card className="space-y-3 p-4">
-            <div className="flex gap-3">
-              <Input placeholder="نام دپارتمان" value={newName} onChange={(e) => setNewName(e.target.value)} />
-              <Input placeholder="توضیحات" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} />
+            <div className="grid grid-cols-2 gap-2">
+              {langEntries.map(({ code, label }) => (
+                <Input key={code} placeholder={`نام (${label})`} value={newName[code]} onChange={(e) => setNewName({ ...newName, [code]: e.target.value })} />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {langEntries.map(({ code, label }) => (
+                <Input key={code} placeholder={`توضیحات (${label})`} value={newDesc[code]} onChange={(e) => setNewDesc({ ...newDesc, [code]: e.target.value })} />
+              ))}
             </div>
             <div className="flex gap-3">
               <select
@@ -137,7 +157,7 @@ export default function AdminDepartments() {
               >
                 <option value="">— ریشه —</option>
                 {flat.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
+                  <option key={d.id} value={d.id}>{getLocalizedField(d.name, locale)}</option>
                 ))}
               </select>
               <Button color="primary" onClick={addDept}>ذخیره</Button>
