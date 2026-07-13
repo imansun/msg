@@ -66,7 +66,7 @@ import { useAuthContext } from "@/app/contexts/auth/context";
 import { useLocalStorage } from "@/hooks";
 import { randomId } from "@/utils/randomId";
 
-const API = "http://localhost:3001";
+const API = "http://localhost:3000";
 
 function getFileIcon(ext?: string | null): IconType {
   if (!ext) return TbFile;
@@ -722,6 +722,7 @@ export default function Messenger() {
                 </div>
                 <FilePond
                   ref={pondRef}
+                  name="file"
                   allowMultiple={false}
                   maxFileSize="6MB"
                   acceptedFileTypes={[".pdf", ".docx", ".xlsx", ".pptx", ".txt"]}
@@ -736,7 +737,7 @@ export default function Messenger() {
                         const data = typeof response === "string" ? JSON.parse(response) : response;
                         if (data.error) { alert(data.error); return null; }
                         setUploadedFileInfo(data);
-                        return data;
+                        return data.filePath || "ok";
                       },
                       onerror: () => { alert("خطا در آپلود فایل"); return null; },
                     },

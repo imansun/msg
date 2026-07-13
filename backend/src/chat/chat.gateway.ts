@@ -13,7 +13,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message } from './message.entity';
 
-@WebSocketGateway({ cors: { origin: ['http://localhost:3000', 'http://localhost:5173', 'http://192.168.42.39:3000', 'http://172.25.11.20:3000', 'http://192.168.42.39:5173', 'http://172.25.11.20:5173'], credentials: true } })
+@WebSocketGateway({ cors: { origin: ['http://localhost:3000', 'http://localhost:5173'], credentials: true } })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
