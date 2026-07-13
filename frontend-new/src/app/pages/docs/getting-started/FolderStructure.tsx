@@ -1,0 +1,98 @@
+import { SyntaxHighlighter } from "@/components/shared/SyntaxHighlighter";
+
+export function FolderStructure() {
+  return (
+    <section>
+      <h3
+        id="folder-structure"
+        className="dark:border-dark-500 mt-10 scroll-mt-20 border-b border-gray-200 pb-1 text-lg font-semibold lg:text-2xl"
+        data-heading="ساختار پوشه‌ها"
+        data-order="2"
+      >
+        <a href="#folder-structure">ساختار پوشه‌ها</a>
+      </h3>
+      <div className="text-sm-plus mt-5">
+        <p>
+          Tailux یک ساختار پوشه‌ای تمیز و منظم ارائه می‌دهد که پیدا کردن و بازسازی کامپوننت‌ها و بخش‌های مختلف پروژه را آسان می‌کند. این طراحی به گونه‌ای است که امکان مقیاس‌پذیری راحت برای پروژه‌هایی با هر اندازه را فراهم می‌سازد.
+        </p>
+        <div className="mt-5 text-sm">
+          <SyntaxHighlighter>
+            {`├── public                             # Static assets
+|   ├── images                         # Image assets 
+|   └── md                             # Markdown files
+├── src                                # Main Source Folder
+|   ├── app                            # Core Application Folder
+|   |   ├── contexts                   # Application context providers
+|   |   |   └── ...              
+|   |   ├── layouts                    # Application layout components  
+|   |   |   └── ...              
+|   |   ├── navigation                 # Application navigation tree  
+|   |   |   └── ...              
+|   |   ├── pages                      # APPLICATION PAGES  
+|   |   |   └── ...              
+|   |   └── router                     # Application routes  
+|   |       └── ...              
+|   ├── assets                         # Static Importable Assets  
+|   |   └── ...             
+|   ├── components                     # App UI Components
+|   |   ├── docs                       # Documentation components
+|   |   |   └── ...              
+|   |   ├── shared                     # Shared Components
+|   |   |   └── ...              
+|   |   ├── template                   # Application parts (e.g., search, notifications)
+|   |   |   └── ...              
+|   |   └── ui                         # Core UI components  
+|   |       └── ...              
+|   ├── configs                        # Application configurations
+|   |   ├── auth.ts             # Authentication configuration
+|   |   ├── breakpoints.ts      # Responsive breakpoints
+|   |   └── theme.ts            # Theme configuration
+|   ├── constants                      # Application constants
+|   |   ├── app.ts            # General application constants
+|   |   ├── colors.ts         # Color constants 
+|   |   └── countries.ts        # Countries
+|   ├── hooks                          # App Custom hooks
+|   |   └── ...              
+|   ├── i18n                           # Internationalization
+|   |   ├── locales                    # Locale constants 
+|   |   |   └── ...              
+|   |   ├── config.ts         # i18n configuration
+|   |   └── langs.ts                   # Language imports (e.g., datepicker, dayjs, flags)  
+|   ├── middleware                     # Middleware for application routing
+|   |   ├── AuthGuard.tsx              # Authentication guard for route
+|   |   └── GhostGuard.tsx             # Guard guard for route
+|   ├── styles                         # Application Styles
+|   |   ├── app         
+|   |   |   ├── components             # Styling for core UI components  
+|   |   |   |   └── ...              
+|   |   |   ├── forms                  # Styling for form elements
+|   |   |   |   └── ...              
+|   |   |   ├── vendors                # Styling for third-party library integrations
+|   |   |   |   └── ...              
+|   |   |   └── index.css              # Combines styles from components, forms, and vendors
+|   |   ├── base.css                   # Foundational theme styles
+|   |   ├── index.css                  # Primary CSS entry point 
+|   |   ├── colors.css                 # Theme Colors 
+|   |   ├── layout.css                 # Layout-specific styles (e.g., main-layout, sideblock)
+|   |   └── variants.css               # Styles for color themes and variants
+|   ├── utils                          # Utility Functions
+|   |   └── ...             
+|   ├── App.tsx                        # Application entry point
+|   └── main.tsx                       # React entry point
+├── .gitignore                         # Git ignore file
+├── .prettierignore                    # Prettier ignore file
+├── eslint.config.js                   # ESLint configuration
+├── index.html                         # HTML entry point
+├── jsconfig.json                      # JavaScript configuration
+├── package.json                       # NPM package configuration  
+├── prettier.config.js                 # Prettier configuration
+├── README.md                          # Readme file
+├── vite.config.ts                     # Vite configuration
+└── yarn.lock                          # Yarn lock file
+`}
+          </SyntaxHighlighter>
+        </div>
+      </div>
+    </section>
+  );
+}

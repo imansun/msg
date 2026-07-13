@@ -1,0 +1,133 @@
+export interface User {
+  uid: string;
+  name: string;
+  avatar?: string | null;
+  email: string;
+  website: string;
+  phone: string;
+  position: string;
+  isOnline: boolean;
+}
+
+export const users: User[] = [
+  {
+    uid: "1",
+    name: "چیکیتا فلامنت",
+    avatar: "/images/avatar/avatar-6.jpg",
+    email: "cflament0@foxnews.com",
+    website: "www.foxnews.com",
+    phone: "۳۱۲-۳۲۹-۵۹۶۳",
+    position: "توسعه‌دهنده بک‌اند",
+    isOnline: true,
+  },
+  {
+    uid: "2",
+    name: "لودویگ کِنه‌آ",
+    avatar: "/images/avatar/avatar-12.jpg",
+    email: "lkennea1@nydailynews.com",
+    website: "www.nydailynews.com",
+    phone: "۳۹۸-۱۸۱-۰۷۹۹",
+    position: "توسعه‌دهنده فرانت‌اند",
+    isOnline: true,
+  },
+  {
+    uid: "3",
+    name: "کلوین کونینگ",
+    avatar: "/images/avatar/avatar-20.jpg",
+    email: "kkeuning2@nih.gov",
+    website: "www.nih.gov",
+    phone: "۱۷۷-۳۰۲-۱۰۶۵",
+    position: "طراح UI/UX",
+    isOnline: true,
+  },
+  {
+    uid: "4",
+    name: "هومر اونولان",
+    avatar: "/images/avatar/avatar-11.jpg",
+    email: "honoulane3@goo.ne.jp",
+    website: "www.goo.ne.jp",
+    phone: "۶۷۳-۹۴۲-۱۸۵۲",
+    position: "توسعه‌دهنده وب",
+    isOnline: false,
+  },
+  {
+    uid: "5",
+    name: "Amir Fadaei",
+    avatar: null,
+    email: "ksalerno4@amazonaws.com",
+    website: "www.amazonaws.com",
+    phone: "۳۵۵-۴۵۱-۱۴۹۰",
+    position: "مدیر بازرگانی",
+    isOnline: true,
+  },
+  {
+    uid: "6",
+    name: "جورجیانا لانست",
+    avatar: "/images/avatar/avatar-10.jpg",
+    email: "glancett5@w3.org",
+    website: "www.w3.org",
+    phone: "۹۵۷-۸۴۲-۲۷۳۲",
+    position: "منابع انسانی",
+    isOnline: true,
+  },
+  {
+    uid: "7",
+    name: "الیسیا هانتر",
+    avatar: "/images/avatar/avatar-10.jpg",
+    email: "ehunter6@cocolog-nifty.com",
+    website: "www.cocolog-nifty.com",
+    phone: "۷۹۱-۳۳۲-۳۶۲۰",
+    position: "مهندس نرم‌افزار",
+    isOnline: true,
+  },
+  {
+    uid: "8",
+    name: "Ali Heydari",
+    avatar: null,
+    email: "mfynan7@photobucket.com",
+    website: "www.photobucket.com",
+    phone: "۲۳۱-۹۶۶-۷۴۵۴",
+    position: "توسعه‌دهنده iOS",
+    isOnline: true,
+  },
+  {
+    uid: "9",
+    name: "کوپر هنفری",
+    avatar: "/images/avatar/avatar-17.jpg",
+    email: "chanfrey8@indiatimes.com",
+    website: "www.indiatimes.com",
+    phone: "۸۵۳-۳۱۸-۱۵۹۳",
+    position: "توسعه‌دهنده فول‌استک",
+    isOnline: false,
+  },
+  {
+    uid: "10",
+    name: "Reza Alizadeh",
+    avatar: null,
+    email: "ibeininck9@smugmug.com",
+    website: "www.smugmug.com",
+    phone: "۹۵۲-۵۰۰-۰۷۲۷",
+    position: "توسعه‌دهنده اندروید",
+    isOnline: true,
+  },
+  {
+    uid: "11",
+    name: "آرلِن گیونه‌او",
+    avatar: "/images/avatar/avatar-17.jpg",
+    email: "aguyonneaua@apple.com",
+    website: "www.apple.com",
+    phone: "۱۷۳-۸۳۴-۹۶۹۱",
+    position: "توسعه‌دهنده ارشد",
+    isOnline: true,
+  },
+  {
+    uid: "12",
+    name: "اِردا ماتیا",
+    avatar: "/images/avatar/avatar-14.jpg",
+    email: "ematyjab@sbwire.com",
+    website: "www.sbwire.com",
+    phone: "۷۶۲-۴۳۷-۱۶۶۸",
+    position: "توسعه‌دهنده لاراول",
+    isOnline: true,
+  },
+];

@@ -1,0 +1,127 @@
+import { useEffect, useReducer, ReactNode } from "react";
+import axios from "@/utils/axios";
+import { isTokenValid, setSession } from "@/utils/jwt";
+import { AuthProvider as AuthContext, AuthContextType } from "./context";
+import { User } from "@/@types/user";
+
+interface AuthAction {
+  type:
+    | "INITIALIZE"
+    | "LOGIN_REQUEST"
+    | "LOGIN_SUCCESS"
+    | "LOGIN_ERROR"
+    | "LOGOUT";
+  payload?: Partial<AuthContextType>;
+}
+
+const initialState: AuthContextType = {
+  isAuthenticated: false,
+  isLoading: false,
+  isInitialized: false,
+  errorMessage: null,
+  user: null,
+  login: async () => {},
+  register: async () => "",
+  logout: async () => {},
+};
+
+const reducerHandlers: Record<
+  AuthAction["type"],
+  (state: AuthContextType, action: AuthAction) => AuthContextType
+> = {
+  INITIALIZE: (state, action) => ({
+    ...state,
+    isAuthenticated: action.payload?.isAuthenticated ?? false,
+    isInitialized: true,
+    user: action.payload?.user ?? null,
+  }),
+  LOGIN_REQUEST: (state) => ({ ...state, isLoading: true }),
+  LOGIN_SUCCESS: (state, action) => ({
+    ...state,
+    isAuthenticated: true,
+    isLoading: false,
+    user: action.payload?.user ?? null,
+  }),
+  LOGIN_ERROR: (state, action) => ({
+    ...state,
+    errorMessage: action.payload?.errorMessage ?? "خطایی رخ داد",
+    isLoading: false,
+  }),
+  LOGOUT: (state) => ({ ...state, isAuthenticated: false, user: null }),
+};
+
+const reducer = (
+  state: AuthContextType,
+  action: AuthAction,
+): AuthContextType => {
+  const handler = reducerHandlers[action.type];
+  return handler ? handler(state, action) : state;
+};
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const authToken = localStorage.getItem("authToken");
+
+        if (authToken && isTokenValid(authToken)) {
+          setSession(authToken);
+          const stored = localStorage.getItem("authUser");
+          if (stored) {
+            const user: User = JSON.parse(stored);
+            dispatch({ type: "INITIALIZE", payload: { isAuthenticated: true, user } });
+          } else {
+            dispatch({ type: "INITIALIZE", payload: { isAuthenticated: false, user: null } });
+          }
+        } else {
+          dispatch({ type: "INITIALIZE", payload: { isAuthenticated: false, user: null } });
+        }
+      } catch {
+        dispatch({ type: "INITIALIZE", payload: { isAuthenticated: false, user: null } });
+      }
+    };
+    init();
+  }, []);
+
+  const login = async (credentials: { username: string; password: string }) => {
+    dispatch({ type: "LOGIN_REQUEST" });
+    try {
+      const response = await axios.post<{ token: string; user: User }>(
+        "/auth/login",
+        credentials,
+      );
+      const { token, user } = response.data;
+      setSession(token);
+      localStorage.setItem("authUser", JSON.stringify(user));
+      dispatch({ type: "LOGIN_SUCCESS", payload: { user } });
+    } catch (err: any) {
+      const msg = err?.message || "ورود ناموفق بود";
+      dispatch({ type: "LOGIN_ERROR", payload: { errorMessage: msg } });
+    }
+  };
+
+  const register = async (data: { username: string; password: string; fingerprint: string; clientIp?: string; windowsUser?: string }): Promise<string> => {
+    const response = await axios.post<{ message: string; isAdmin: boolean }>(
+      "/auth/register",
+      data,
+    );
+    return response.data.message;
+  };
+
+  const logout = async () => {
+    setSession(null);
+    localStorage.removeItem("authUser");
+    localStorage.removeItem("authToken");
+    dispatch({ type: "LOGOUT" });
+  };
+
+  if (!children) return null;
+
+  return (
+    <AuthContext value={{ ...state, login, register, logout }}>
+      {children}
+    </AuthContext>
+  );
+}
