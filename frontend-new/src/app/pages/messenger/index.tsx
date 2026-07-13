@@ -265,8 +265,10 @@ export default function Messenger() {
   const [openDepts, setOpenDepts] = useState<Record<number, boolean>>({});
   const socketRef = useRef<Socket | null>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate = useNavigate();
   const [myDeptIds, setMyDeptIds] = useState<number[]>([]);
+  const [typingMap, setTypingMap] = useState<Record<string, { senderId: number; senderName: string } | null>>({});
 
   const [membersOpen, setMembersOpen] = useState(false);
   const [membersDept, setMembersDept] = useState<Dept | null>(null);
@@ -304,6 +306,7 @@ export default function Messenger() {
             : tab
         )
       );
+      setTypingMap((prev) => ({ ...prev, [msg.room]: null }));
     });
 
     socket.on("onlineUsers", (ids: number[]) => setOnlineUsers(ids));
@@ -324,6 +327,14 @@ export default function Messenger() {
           };
         })
       );
+    });
+
+    socket.on("typing", (data: { senderId: number; senderName: string; room?: string }) => {
+      setTypingMap((prev) => ({ ...prev, [data.room || ""]: { senderId: data.senderId, senderName: data.senderName } }));
+    });
+
+    socket.on("stopTyping", (data: { senderId: number; room?: string }) => {
+      setTypingMap((prev) => ({ ...prev, [data.room || ""]: null }));
     });
 
     axios.get("/departments/tree").then((r) => setDepartments(r.data));
@@ -384,6 +395,21 @@ export default function Messenger() {
 
   const updateTabText = (tabId: string, text: string) => {
     setTabs((prev) => prev.map((t) => (t.id === tabId ? { ...t, text } : t)));
+    const tab = tabs.find((t) => t.id === tabId);
+    if (!tab || !socketRef.current) return;
+    const payload: any = {};
+    if (tab.type === "dm" && tab.targetId) { payload.recipientId = tab.targetId; }
+    else { payload.room = tab.room; }
+    if (text.length > 0) {
+      socketRef.current.emit("typing", payload);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        socketRef.current?.emit("stopTyping", payload);
+      }, 2000);
+    } else {
+      socketRef.current.emit("stopTyping", payload);
+      if (typingTimeoutRef.current) { clearTimeout(typingTimeoutRef.current); typingTimeoutRef.current = null; }
+    }
   };
 
   const openGeneral = () => openTab("general");
@@ -407,10 +433,15 @@ export default function Messenger() {
   const send = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeTab || !activeTab.text.trim()) return;
+    if (typingTimeoutRef.current) { clearTimeout(typingTimeoutRef.current); typingTimeoutRef.current = null; }
     const payload: any = { text: activeTab.text };
     if (activeTab.type === "dm" && activeTab.targetId) { payload.recipientId = activeTab.targetId; }
     else { payload.room = activeTab.room; }
     socketRef.current?.emit("sendMessage", payload);
+    const stopPayload: any = {};
+    if (activeTab.type === "dm" && activeTab.targetId) { stopPayload.recipientId = activeTab.targetId; }
+    else { stopPayload.room = activeTab.room; }
+    socketRef.current?.emit("stopTyping", stopPayload);
     updateTabText(activeTab.id, "");
   };
 
@@ -671,6 +702,16 @@ export default function Messenger() {
                           );
                         })}
                         <div ref={messagesEnd} />
+                        {typingMap[tab.room] && typingMap[tab.room]!.senderId !== user?.id && (
+                          <div className="flex items-center gap-2 px-2 py-1 text-xs text-gray-400">
+                            <span className="flex gap-0.5">
+                              <span className="size-1.5 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
+                              <span className="size-1.5 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
+                              <span className="size-1.5 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+                            </span>
+                            <span>{typingMap[tab.room]!.senderName} در حال تایپ است...</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Input */}

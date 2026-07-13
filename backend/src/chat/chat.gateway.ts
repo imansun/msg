@@ -166,4 +166,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(room);
     return { room };
   }
+
+  @SubscribeMessage('typing')
+  handleTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { room?: string; recipientId?: number },
+  ) {
+    const user = client.data.user;
+    let roomName = data.room;
+    if (data.recipientId) {
+      roomName = this.getPrivateRoom(user.sub, data.recipientId);
+    }
+    if (!roomName) return;
+    client.to(roomName).emit('typing', { senderId: user.sub, senderName: user.username, room: roomName });
+  }
+
+  @SubscribeMessage('stopTyping')
+  handleStopTyping(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { room?: string; recipientId?: number },
+  ) {
+    const user = client.data.user;
+    let roomName = data.room;
+    if (data.recipientId) {
+      roomName = this.getPrivateRoom(user.sub, data.recipientId);
+    }
+    if (!roomName) return;
+    client.to(roomName).emit('stopTyping', { senderId: user.sub, senderName: user.username, room: roomName });
+  }
 }
