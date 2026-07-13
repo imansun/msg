@@ -37,6 +37,6 @@ export class Message {
   @Column({ type: 'simple-json', nullable: true })
   deletedBy: number[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ precision: 3 })
   createdAt: Date;
 }

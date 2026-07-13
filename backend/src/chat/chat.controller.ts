@@ -46,9 +46,10 @@ export class ChatController {
       order: { createdAt: 'DESC' },
       take: 50,
     });
-    if (!userId) return msgs;
+    const reversed = msgs.reverse();
+    if (!userId) return reversed;
     const uid = parseInt(userId, 10);
-    return msgs.filter((m) => {
+    return reversed.filter((m) => {
       if (!m.deletedBy) return true;
       return !m.deletedBy.includes(uid);
     });

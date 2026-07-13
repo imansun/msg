@@ -408,7 +408,7 @@ export default function Messenger() {
   const loadMessages = async (tabId: string, room: string) => {
     const r = await axios.get(`/chat/messages?room=${room}&userId=${user!.id}`);
     setTabs((prev) =>
-      prev.map((t) => (t.id === tabId ? { ...t, messages: r.data.reverse() } : t))
+      prev.map((t) => (t.id === tabId ? { ...t, messages: r.data } : t))
     );
   };
   const openTab = (type: "dm" | "dept" | "general", targetId?: number, targetName?: string) => {
