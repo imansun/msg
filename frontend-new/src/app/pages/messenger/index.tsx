@@ -171,8 +171,58 @@ interface ChatTab {
   text: string;
 }
 
+interface MessageGroup {
+  senderId: number;
+  senderName: string;
+  isOwn: boolean;
+  messages: Msg[];
+  showTimestamp: boolean;
+  timestamp: string;
+}
+
 function getPrivateRoom(a: number, b: number) {
   return [Math.min(a, b), Math.max(a, b)].join("-");
+}
+
+function groupMessages(messages: Msg[], currentUserId: number): MessageGroup[] {
+  const groups: MessageGroup[] = [];
+  let currentGroup: MessageGroup | null = null;
+
+  messages.forEach((msg, index) => {
+    const isOwn = msg.senderId === currentUserId;
+    const prevMsg = index > 0 ? messages[index - 1] : null;
+    const isNewGroup = !prevMsg || prevMsg.senderId !== msg.senderId;
+
+    if (isNewGroup) {
+      if (currentGroup) {
+        groups.push(currentGroup);
+      }
+      currentGroup = {
+        senderId: msg.senderId,
+        senderName: msg.senderName,
+        isOwn,
+        messages: [msg],
+        showTimestamp: true,
+        timestamp: new Date(msg.createdAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
+      };
+    } else {
+      currentGroup!.messages.push(msg);
+    }
+
+    const nextMsg = messages[index + 1];
+    const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId;
+
+    if (isLastInGroup && currentGroup) {
+      currentGroup.showTimestamp = true;
+      currentGroup.timestamp = new Date(msg.createdAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+    }
+  });
+
+  if (currentGroup) {
+    groups.push(currentGroup);
+  }
+
+  return groups;
 }
 function DeptTreeNode({
   dept,
@@ -311,7 +361,7 @@ export default function Messenger() {
 
     socket.on("onlineUsers", (ids: number[]) => setOnlineUsers(ids));
 
-    socket.on("messageDeleted", (data: { messageId: number; hard: boolean }) => {
+    socket.on("messageDeleted", (data: { messageId: number; hard: boolean; deletedBy?: number[] }) => {
       setTabs((prev) =>
         prev.map((tab) => {
           if (data.hard) {
@@ -321,7 +371,7 @@ export default function Messenger() {
             ...tab,
             messages: tab.messages.map((m) =>
               m.id === data.messageId
-                ? { ...m, deletedBy: [...(m.deletedBy || []), user!.id] }
+                ? { ...m, deletedBy: data.deletedBy || m.deletedBy || [] }
                 : m
             ),
           };
@@ -476,6 +526,16 @@ export default function Messenger() {
     socketRef.current?.emit("deleteMessage", { messageId: msg.id });
   };
 
+  const clearAllMessages = async () => {
+    if (!confirm("آیا مطمئن هستید؟ تمام پیام‌ها حذف خواهند شد.")) return;
+    try {
+      await axios.delete("/chat/messages");
+      setTabs((prev) => prev.map((tab) => ({ ...tab, messages: [] })));
+    } catch (err) {
+      console.error("Failed to clear messages:", err);
+    }
+  };
+
   const topDepts = departments.filter((d) => !d.parentId);
   return (
     <Page title="مسنجر">
@@ -522,6 +582,19 @@ export default function Messenger() {
                 />
               ))}
             </div>
+
+            {user?.isAdmin && (
+              <>
+                <div className="my-2 h-px bg-gray-200 dark:bg-dark-500" />
+                <button
+                  onClick={clearAllMessages}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-500 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-dark-600"
+                >
+                  <TrashIcon className="size-4" />
+                  <span>پاک کردن تمام پیام‌ها</span>
+                </button>
+              </>
+            )}
           </div>
 
           {/* Profile Footer */}
@@ -637,6 +710,39 @@ export default function Messenger() {
                 <TabPanels className="flex flex-1 flex-col">
                   {tabs.map((tab) => (
                     <TabPanel key={tab.id} className="flex flex-1 flex-col" unmount={false}>
+                      {/* Chat Header */}
+                      <div className="shrink-0 flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-dark-500">
+                        {tab.type === "dm" ? (
+                          <>
+                            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                              {tab.targetName[0]?.toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800 dark:text-dark-100">{tab.targetName}</p>
+                              <p className="text-[10px] text-gray-400">
+                                {onlineUsers.includes(tab.targetId || -1) ? "آنلاین" : "آفلاین"}
+                              </p>
+                            </div>
+                          </>
+                        ) : tab.type === "dept" ? (
+                          <>
+                            {(() => { const Icon = getDeptIcon(tab.targetName); return <Icon className="size-6 text-primary" />; })()}
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800 dark:text-dark-100">{tab.targetName}</p>
+                              <p className="text-[10px] text-gray-400">گروه کاری</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <span className="flex size-10 items-center justify-center rounded-full bg-warning/10 text-lg font-bold text-warning">#</span>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-800 dark:text-dark-100">اطلاع‌رسانی عمومی</p>
+                              <p className="text-[10px] text-gray-400">{!user?.isAdmin ? "فقط خواندنی" : "ارسال پیام"}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
                       {/* Messages */}
                       <div className="flex-1 overflow-y-auto p-4">
                         {tab.messages.length === 0 && (
@@ -644,63 +750,88 @@ export default function Messenger() {
                             پیامی نیست
                           </div>
                         )}
-                        {tab.messages.map((m) => {
-                          const isSoftDeletedByMe = m.deletedBy?.includes(user!.id);
-                          if (isSoftDeletedByMe) return null;
-                          const isSoftDeleted = m.deletedBy && m.deletedBy.length > 0;
-                          const ageMs = Date.now() - new Date(m.createdAt).getTime();
-                          const within60s = ageMs < 60000;
-                          const isSender = m.senderId === user?.id;
-                          const canDelete = within60s || isSender;
-                          const isOwn = m.senderId === user?.id;
-
-                          return (
+                        {(() => {
+                          const filteredMessages = tab.messages.filter((m) => !m.deletedBy?.includes(user!.id));
+                          const groups = groupMessages(filteredMessages, user!.id);
+                          return groups.map((group) => (
                             <div
-                              key={m.id}
-                              className={clsx("group mb-2 flex max-w-[70%] flex-col", isOwn ? "ml-auto items-end" : "mr-auto items-start")}
-                              onContextMenu={(e) => { e.preventDefault(); if (canDelete) setContextMsg(m); }}
+                              key={group.messages[0].id}
+                              className={clsx("mb-4 flex flex-col", group.isOwn ? "items-end" : "items-start")}
                             >
-                              {!isOwn && (
-                                <p className="mb-0.5 px-2 text-[10px] font-bold text-primary">{m.senderName}</p>
+                              {/* Sender info for non-own messages in group chats */}
+                              {!group.isOwn && tab.type !== "dm" && (
+                                <div className="mb-1 flex items-center gap-2 px-2">
+                                  <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                                    {group.senderName[0]?.toUpperCase()}
+                                  </div>
+                                  <span className="text-xs font-medium text-primary">{group.senderName}</span>
+                                </div>
                               )}
-                              <div className={clsx("rounded-xl px-4 py-2", isOwn ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-900 dark:bg-dark-600 dark:text-dark-50")}>
-                                {isSoftDeleted ? (
-                                  <p className="flex items-center gap-1.5 text-sm italic opacity-60">
-                                    <TrashIcon className="size-3.5 shrink-0" /> پیام حذف شد
-                                  </p>
-                                ) : (
-                                  <>
-                                    {m.text && <p className="text-sm leading-relaxed">{m.text}</p>}
-                                    {m.filePath && (
-                                      <div className="mt-1">
-                                        <a
-                                          href={`${API}${m.filePath}`}
-                                          download={m.fileName || undefined}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          onClick={(e) => e.stopPropagation()}
-                                          className={clsx("flex items-center gap-2.5 rounded-lg px-3 py-2.5 transition-colors no-underline", isOwn ? "bg-white/20 hover:bg-white/30" : "bg-gray-100 hover:bg-gray-200 dark:bg-dark-500 dark:hover:bg-dark-400")}
-                                        >
-                                          <span className={clsx("flex size-10 shrink-0 items-center justify-center rounded-lg", isOwn ? "bg-white/20" : "bg-gray-300 dark:bg-dark-400")}>
-                                            {(() => { const FileIcon = getFileIcon(m.fileType); return <FileIcon className={clsx("size-5", isOwn ? "text-white" : getFileColor(m.fileType))} />; })()}
-                                          </span>
-                                          <div className="min-w-0 flex-1">
-                                            <p className={clsx("truncate text-xs font-medium leading-tight", isOwn ? "text-white" : "text-gray-800 dark:text-dark-100")}>{m.fileName}</p>
-                                            <p className={clsx("mt-0.5 text-[10px] leading-tight", isOwn ? "text-white/70" : "text-gray-500 dark:text-dark-300")}>{formatFileSize(m.fileSize)}</p>
-                                          </div>
-                                          <ArrowDownTrayIcon className={clsx("size-4 shrink-0", isOwn ? "text-white/80" : "text-gray-500 dark:text-dark-300")} />
-                                        </a>
+
+                              {/* Messages in group */}
+                              <div className={clsx("flex flex-col gap-0.5", group.isOwn ? "items-end" : "items-start")}>
+                                {group.messages.map((m) => {
+                                  const isSoftDeleted = m.deletedBy && m.deletedBy.length > 0;
+                                  const ageMs = Date.now() - new Date(m.createdAt).getTime();
+                                  const within60s = ageMs < 60000;
+                                  const isSender = m.senderId === user?.id;
+                                  const canDelete = within60s || isSender;
+
+                                  return (
+                                    <div
+                                      key={m.id}
+                                      className={clsx("group max-w-[70%]", group.isOwn ? "ml-auto" : "mr-auto")}
+                                      onContextMenu={(e) => { e.preventDefault(); if (canDelete) setContextMsg(m); }}
+                                    >
+                                      <div className={clsx(
+                                        "rounded-2xl px-4 py-2.5",
+                                        group.isOwn ? "bg-blue-600 text-white rounded-br-md" : "bg-gray-200 text-gray-900 dark:bg-dark-600 dark:text-dark-50 rounded-bl-md"
+                                      )}>
+                                        {isSoftDeleted ? (
+                                          <p className="flex items-center gap-1.5 text-sm italic opacity-60">
+                                            <TrashIcon className="size-3.5 shrink-0" /> پیام حذف شد
+                                          </p>
+                                        ) : (
+                                          <>
+                                            {m.text && <p className="text-sm leading-relaxed">{m.text}</p>}
+                                            {m.filePath && (
+                                              <div className="mt-1">
+                                                <a
+                                                  href={`${API}${m.filePath}`}
+                                                  download={m.fileName || undefined}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  onClick={(e) => e.stopPropagation()}
+                                                  className={clsx("flex items-center gap-2.5 rounded-lg px-3 py-2.5 transition-colors no-underline", group.isOwn ? "bg-white/20 hover:bg-white/30" : "bg-gray-100 hover:bg-gray-200 dark:bg-dark-500 dark:hover:bg-dark-400")}
+                                                >
+                                                  <span className={clsx("flex size-10 shrink-0 items-center justify-center rounded-lg", group.isOwn ? "bg-white/20" : "bg-gray-300 dark:bg-dark-400")}>
+                                                    {(() => { const FileIcon = getFileIcon(m.fileType); return <FileIcon className={clsx("size-5", group.isOwn ? "text-white" : getFileColor(m.fileType))} />; })()}
+                                                  </span>
+                                                  <div className="min-w-0 flex-1">
+                                                    <p className={clsx("truncate text-xs font-medium leading-tight", group.isOwn ? "text-white" : "text-gray-800 dark:text-dark-100")}>{m.fileName}</p>
+                                                    <p className={clsx("mt-0.5 text-[10px] leading-tight", group.isOwn ? "text-white/70" : "text-gray-500 dark:text-dark-300")}>{formatFileSize(m.fileSize)}</p>
+                                                  </div>
+                                                  <ArrowDownTrayIcon className={clsx("size-4 shrink-0", group.isOwn ? "text-white/80" : "text-gray-500 dark:text-dark-300")} />
+                                                </a>
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
                                       </div>
-                                    )}
-                                  </>
-                                )}
+                                    </div>
+                                  );
+                                })}
                               </div>
-                              <p className="mt-0.5 px-2 text-[10px] text-gray-400">
-                                {new Date(m.createdAt).toLocaleTimeString("fa-IR")}
-                              </p>
+
+                              {/* Timestamp */}
+                              {group.showTimestamp && (
+                                <p className="mt-1 px-2 text-[10px] text-gray-400">
+                                  {group.timestamp}
+                                </p>
+                              )}
                             </div>
-                          );
-                        })}
+                          ));
+                        })()}
                         <div ref={messagesEnd} />
                         {typingMap[tab.room] && typingMap[tab.room]!.senderId !== user?.id && (
                           <div className="flex items-center gap-2 px-2 py-1 text-xs text-gray-400">

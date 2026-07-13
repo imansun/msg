@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Query,
   Body,
   UseGuards,
@@ -156,5 +157,12 @@ export class ChatController {
       return res.status(HttpStatus.NOT_FOUND).json({ error: 'فایل یافت نشد' });
     }
     return res.sendFile(filePath);
+  }
+
+  @UseGuards(JwtAuthGuard, AdminGuard)
+  @Delete('messages')
+  async clearAllMessages() {
+    await this.messageRepo.clear();
+    return { message: 'تمام پیام‌ها حذف شدند' };
   }
 }
