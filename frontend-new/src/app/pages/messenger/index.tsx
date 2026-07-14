@@ -829,6 +829,14 @@ export default function Messenger() {
                                           </>
                                         )}
                                       </div>
+                                      {!isSoftDeleted && (
+                                        <p className={clsx(
+                                          "mt-0.5 px-1 text-[9px] text-gray-400 dark:text-dark-400",
+                                          group.isOwn ? "text-left" : "text-right"
+                                        )}>
+                                          {moment(m.createdAt).locale("fa").format("HH:mm")}
+                                        </p>
+                                      )}
                                     </div>
                                   );
                                 })}
