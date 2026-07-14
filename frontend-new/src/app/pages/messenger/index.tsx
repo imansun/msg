@@ -57,6 +57,7 @@ import {
   TbFileSpreadsheet,
   TbFileTypePpt,
 } from "react-icons/tb";
+import moment from "jalali-moment";
 import axios from "@/utils/axios";
 import { Page } from "@/components/shared/Page";
 import { Button, Avatar, Badge } from "@/components/ui";
@@ -203,7 +204,7 @@ function groupMessages(messages: Msg[], currentUserId: number): MessageGroup[] {
         isOwn,
         messages: [msg],
         showTimestamp: true,
-        timestamp: new Date(msg.createdAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
+        timestamp: moment(msg.createdAt).locale("fa").format("jYYYY/jMM/jDD HH:mm"),
       };
     } else {
       currentGroup!.messages.push(msg);
@@ -214,7 +215,7 @@ function groupMessages(messages: Msg[], currentUserId: number): MessageGroup[] {
 
     if (isLastInGroup && currentGroup) {
       currentGroup.showTimestamp = true;
-      currentGroup.timestamp = new Date(msg.createdAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+      currentGroup.timestamp = moment(msg.createdAt).locale("fa").format("jYYYY/jMM/jDD HH:mm");
     }
   });
 
