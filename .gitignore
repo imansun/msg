@@ -35,3 +35,4 @@ jspm_packages/
 
 # TypeScript cache
 *.tsbuildinfo
+.aider*
