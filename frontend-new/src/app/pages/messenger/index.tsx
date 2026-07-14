@@ -669,11 +669,11 @@ export default function Messenger() {
           </div>
         </div>
         {/* Chat Area with Tabs */}
-        <div className="flex flex-1 flex-col bg-white dark:bg-dark-800">
+        <div className="flex flex-1 flex-col overflow-hidden bg-white dark:bg-dark-800">
           <TabGroup
             selectedIndex={tabs.findIndex((t) => t.id === activeTabId)}
             onChange={(idx) => { if (tabs[idx]) setActiveTabId(tabs[idx].id); }}
-            className="flex flex-1 flex-col"
+            className="flex flex-1 flex-col overflow-hidden"
           >
             {/* Tabs Header */}
             <div className="shrink-0 overflow-x-auto border-b border-gray-200 dark:border-dark-500">
@@ -718,9 +718,9 @@ export default function Messenger() {
                 </TabList>
             </div>
 
-                <TabPanels className="flex flex-1 flex-col">
+                <TabPanels className="flex flex-1 flex-col overflow-hidden">
                   {tabs.map((tab) => (
-                    <TabPanel key={tab.id} className="flex flex-1 flex-col" unmount={false}>
+                    <TabPanel key={tab.id} className="flex flex-1 flex-col overflow-hidden" unmount={false}>
                       {/* Chat Header */}
                       <div className="shrink-0 flex items-center gap-3 border-b border-gray-200 px-4 py-3 dark:border-dark-500">
                         {tab.type === "dm" ? (
