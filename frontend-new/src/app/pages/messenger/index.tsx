@@ -316,6 +316,7 @@ export default function Messenger() {
   const socketRef = useRef<Socket | null>(null);
   const messagesEnd = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processedDeletesRef = useRef<Set<number>>(new Set());
   const navigate = useNavigate();
   const [myDeptIds, setMyDeptIds] = useState<number[]>([]);
   const [typingMap, setTypingMap] = useState<Record<string, { senderId: number; senderName: string } | null>>({});
@@ -362,6 +363,9 @@ export default function Messenger() {
     socket.on("onlineUsers", (ids: number[]) => setOnlineUsers(ids));
 
     socket.on("messageDeleted", (data: { messageId: number; hard: boolean; deletedBy?: number[] }) => {
+      if (processedDeletesRef.current.has(data.messageId)) return;
+      processedDeletesRef.current.add(data.messageId);
+      setTimeout(() => processedDeletesRef.current.delete(data.messageId), 3000);
       setTabs((prev) =>
         prev.map((tab) => {
           if (data.hard) {
@@ -523,6 +527,12 @@ export default function Messenger() {
     const within60s = ageMs < 60000;
     const isSender = msg.senderId === user?.id;
     if (!within60s && !isSender) return;
+    setTabs((prev) =>
+      prev.map((tab) => ({
+        ...tab,
+        messages: tab.messages.filter((m) => m.id !== msg.id),
+      }))
+    );
     socketRef.current?.emit("deleteMessage", { messageId: msg.id });
   };
 

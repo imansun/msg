@@ -138,8 +138,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (within60s) {
       await this.messageRepo.remove(msg);
-      let roomName = msg.room || 'general';
-      this.server.to(roomName).emit('messageDeleted', { messageId: msg.id, hard: true });
+      const roomName = msg.room || 'general';
+      const payload = { messageId: msg.id, hard: true };
+      this.server.to(roomName).emit('messageDeleted', payload);
+      this.server.to(`user-${user.sub}`).emit('messageDeleted', payload);
       return { ok: true, hard: true };
     }
 
@@ -152,8 +154,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       msg.deletedBy.push(user.sub);
       await this.messageRepo.save(msg);
     }
-    let roomName = msg.room || 'general';
-    this.server.to(roomName).emit('messageDeleted', { messageId: msg.id, hard: false, deletedBy: msg.deletedBy });
+    const roomName = msg.room || 'general';
+    const payload = { messageId: msg.id, hard: false, deletedBy: msg.deletedBy };
+    this.server.to(roomName).emit('messageDeleted', payload);
+    this.server.to(`user-${user.sub}`).emit('messageDeleted', payload);
     return { ok: true, hard: false };
   }
 
