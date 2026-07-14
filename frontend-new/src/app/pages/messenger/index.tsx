@@ -755,7 +755,7 @@ export default function Messenger() {
                       </div>
 
                       {/* Messages */}
-                      <div className="flex-1 overflow-y-auto p-4">
+                      <div className="flex-1 min-h-0 overflow-y-auto p-4">
                         {tab.messages.length === 0 && (
                           <div className="flex h-full items-center justify-center text-sm text-gray-400">
                             پیامی نیست
@@ -867,7 +867,7 @@ export default function Messenger() {
                       {/* Input */}
                       <form
                         onSubmit={(e) => { e.preventDefault(); send(e); }}
-                        className="flex items-center gap-2 border-t border-gray-200 p-3 dark:border-dark-500"
+                        className="flex shrink-0 items-center gap-2 border-t border-gray-200 p-3 dark:border-dark-500"
                       >
                         <HeadlessButton as={Fragment}>
                           {({ hover, active }) => (
